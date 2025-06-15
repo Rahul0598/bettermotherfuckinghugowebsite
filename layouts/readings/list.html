@@ -1,0 +1,169 @@
+{{ define "main" }}
+<div class="readings-list">
+    <h1>{{ .Title }}</h1>
+    {{ .Content }}
+    
+    <div class="books-by-year">
+        {{ $booksByYear := dict }}
+        {{ range .Pages }}
+            {{ $year := .Date.Format "2006" }}
+            {{ $books := index $booksByYear $year }}
+            {{ if not $books }}
+                {{ $books = slice }}
+            {{ end }}
+            {{ $books = $books | append . }}
+            {{ $booksByYear = merge $booksByYear (dict $year $books) }}
+        {{ end }}
+        
+        {{ $sortedYears := slice }}
+        {{ range $year, $books := $booksByYear }}
+            {{ if ne $year "0001" }}
+                {{ $sortedYears = $sortedYears | append $year }}
+            {{ end }}
+        {{ end }}
+        {{ $sortedYears = sort $sortedYears "value" "desc" }}
+        
+        {{ range $sortedYears }}
+        {{ $year := . }}
+        {{ $books := index $booksByYear $year }}
+        {{ $sortedBooks := sort $books "Date" "desc" }}
+        <div class="year-section">
+            <button class="year-toggle" onclick="toggleYear('{{ $year }}')">
+                <span class="toggle-icon" id="icon-{{ $year }}">▼</span>
+                <h2>{{ $year }} ({{ len $books }} books)</h2>
+            </button>
+            
+            <div class="books-list" id="books-{{ $year }}" style="display: block;">
+                {{ range $sortedBooks }}
+                <div class="book-item">
+                    <a href="{{ .Permalink }}" class="book-link">
+                        <h3 class="book-title">{{ .Title }}</h3>
+                        {{ if .Params.author }}
+                        <p class="book-author">by {{ .Params.author }}</p>
+                        {{ end }}
+                        {{ if .Date }}
+                        <p class="book-date">{{ .Date.Format "January 2006" }}</p>
+                        {{ end }}
+                    </a>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<style>
+.books-by-year {
+    margin-top: 2rem;
+}
+
+.year-section {
+    margin-bottom: 2rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.year-toggle {
+    width: 100%;
+    background: #f8f9fa;
+    border: none;
+    padding: 1rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.year-toggle:hover {
+    background: #e9ecef;
+}
+
+.toggle-icon {
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+    width: 1rem;
+}
+
+.toggle-icon.collapsed {
+    transform: rotate(-90deg);
+}
+
+.year-toggle h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+.books-list {
+    transition: all 0.3s ease-out;
+    overflow: hidden;
+}
+
+.books-list.hidden {
+    display: none;
+}
+
+.book-item {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem;
+    transition: background-color 0.2s;
+}
+
+.book-item:last-child {
+    border-bottom: none;
+}
+
+.book-item:hover {
+    background-color: #f8f9fa;
+}
+
+.book-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.book-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.book-author {
+    margin: 0 0 0.25rem 0;
+    color: #666;
+    font-style: italic;
+}
+
+.book-date {
+    margin: 0;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.book-link:hover .book-title {
+    color: #007bff;
+}
+</style>
+
+<script>
+function toggleYear(year) {
+    const booksList = document.getElementById('books-' + year);
+    const icon = document.getElementById('icon-' + year);
+    
+    if (booksList.style.display === 'none') {
+        booksList.style.display = 'block';
+        icon.textContent = '▼';
+        icon.classList.remove('collapsed');
+    } else {
+        booksList.style.display = 'none';
+        icon.textContent = '►';
+        icon.classList.add('collapsed');
+    }
+}
+</script>
+{{ end }}
